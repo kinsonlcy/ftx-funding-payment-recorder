@@ -1,0 +1,21 @@
+{
+  "name": "ftx-funding-payment-recorder",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Kinson Leung <me@kinsonleung.com>",
+  "license": "MIT",
+  "scripts": {
+    "start": "tsc --build ./tsconfig.json && yarn build && node dist/index.js",
+    "build": "cp {package.json,yarn.lock} dist && cd dist && yarn install --prod"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "dotenv": "^8.2.0",
+    "google-spreadsheet": "^3.0.11"
+  },
+  "devDependencies": {
+    "@types/google-spreadsheet": "^3.0.0",
+    "prettier": "^2.0.5",
+    "typescript": "^3.9.7"
+  }
+}

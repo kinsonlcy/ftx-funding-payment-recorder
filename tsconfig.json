@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    "module": "CommonJS",
+    "sourceMap": true,
+    "allowJs": true,
+    "checkJs": false,
+    "target": "ES2016",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "strictFunctionTypes": false,
+    "noEmit": false,
+    "outDir": "dist",
+    "removeComments": true
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules/**/*"]
+}
