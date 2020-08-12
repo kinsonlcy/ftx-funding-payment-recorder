@@ -4,22 +4,10 @@ import {
   GoogleSpreadsheet,
   GoogleSpreadsheetWorksheet,
 } from 'google-spreadsheet';
+import { getAccountPosition, getFundingPayment } from './ftx';
 
-import axios from 'axios';
-import crypto from 'crypto';
-import querystring from 'querystring';
-
-interface ExcelRowHeader {
-  [header: string]: string | number | boolean;
-}
-
-interface FundingPayment extends ExcelRowHeader {
-  future: string;
-  id: number;
-  payment: number;
-  rate: number;
-  time: string;
-}
+import { FundingPayment } from './types';
+import R from 'ramda';
 
 const months = [
   'JAN',
@@ -36,53 +24,10 @@ const months = [
   'DEC',
 ];
 
-const getFundingPayment = async (
-  firstDay: number,
-  lastDay: number
-): Promise<FundingPayment[] | null> => {
-  if (
-    process.env.API_SECRET === undefined ||
-    process.env.API_KEY === undefined
-  ) {
-    throw new Error('Missing api key or secret!');
-  }
-
-  const timePeriodPayload = {
-    start_time: firstDay,
-    end_time: lastDay,
-  };
-
-  const timestamp = Date.now();
-  const payload = `${timestamp}GET/api/funding_payments?${querystring.stringify(
-    timePeriodPayload
-  )}`;
-  const signature = crypto
-    .createHmac('sha256', process.env.API_SECRET)
-    .update(payload)
-    .digest('hex');
-
-  const apiClient = axios.create({
-    baseURL: 'https://ftx.com/api',
-    timeout: 30000,
-    headers: {
-      'FTX-KEY': process.env.API_KEY,
-      'FTX-TS': timestamp,
-      'FTX-SIGN': signature,
-    },
-  });
-
-  const {
-    data: { result, success },
-  } = await apiClient({
-    method: 'get',
-    url: '/funding_payments',
-    params: timePeriodPayload,
-  });
-
-  return success ? result : null;
-};
-
-const updatePaymentRecord = async (fundingPayments: FundingPayment[]) => {
+const updatePaymentRecord = async (
+  future: string,
+  fundingPayments: FundingPayment[]
+) => {
   if (process.env.GOOGLE_SHEET_ID === undefined) {
     throw new Error('Missing google sheet ID!');
   }
@@ -111,14 +56,14 @@ const updatePaymentRecord = async (fundingPayments: FundingPayment[]) => {
   }
 
   const currentTimestamp = new Date(Date.now());
-  const currentMonth = months[currentTimestamp.getMonth()];
-  const sheetId = sheetTitleIdMapping[currentMonth];
+  const sheetName = `${months[currentTimestamp.getMonth()]}-${future}`;
+  const sheetId = sheetTitleIdMapping[sheetName];
 
   let sheet: GoogleSpreadsheetWorksheet;
   if (sheetId === undefined) {
     // create a new sheet if sheet of the month doesn't exist
     sheet = await doc.addSheet({
-      title: currentMonth,
+      title: sheetName,
       headerValues: ['future', 'payment', 'rate', 'time'],
     });
   } else {
@@ -129,9 +74,9 @@ const updatePaymentRecord = async (fundingPayments: FundingPayment[]) => {
   }
 
   // add back data to the sheet
-  console.log(`Writing ${fundingPayments.length} records to spreadsheet.`);
+  console.info(`Writing ${fundingPayments.length} records to spreadsheet.`);
   await sheet.addRows(fundingPayments);
-  console.log('Records have been successfully written.');
+  console.info('Records have been successfully written.');
 
   // assume hkd to usd rate is 7.78
   const hkdToUsdRate = process.env.HKD_TO_USD_RATE || 7.78;
@@ -161,18 +106,31 @@ const run = async () => {
     const firstDay = new Date(y, m, 1).getTime() / 1000;
     const lastDay = new Date(y, m + 1, 0).getTime() / 1000;
 
-    // get funding payment from FTX
-    console.log(`Getting ${months[m]} funding payments.`);
-    const fundingPayments = await getFundingPayment(firstDay, lastDay);
+    // get account futures from FTX
+    const accountFutures = R.pluck('future')(await getAccountPosition());
 
-    if (fundingPayments === null) {
-      throw new Error('Could not get funding payments!');
+    if (!R.isEmpty(accountFutures)) {
+      await Promise.all(
+        accountFutures.map(async (future) => {
+          // get funding payments from FTX
+          console.info(`Getting ${months[m]} ${future} funding payments.`);
+          const fundingPayment = await getFundingPayment(
+            future,
+            firstDay,
+            lastDay
+          );
+
+          if (!R.isEmpty(fundingPayment)) {
+            // Write records to Google spreadsheet
+            await updatePaymentRecord(future, fundingPayment);
+          }
+        })
+      );
+    } else {
+      console.warn('No opening position in your account!');
     }
-
-    // Write records to Google spreadsheet
-    await updatePaymentRecord(fundingPayments);
   } catch (e) {
-    console.log('Error occurred!', e);
+    console.error('Error occurred!', e);
   }
 };
 
