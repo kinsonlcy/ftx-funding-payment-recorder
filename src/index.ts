@@ -8,6 +8,7 @@ import { getAccountPosition, getFundingPayment } from './ftx';
 
 import { FundingPayment } from './types';
 import R from 'ramda';
+import getopts from 'getopts';
 
 const months = [
   'JAN',
@@ -23,6 +24,13 @@ const months = [
   'NOV',
   'DEC',
 ];
+
+const options = getopts(process.argv.slice(2), {
+  alias: {
+    year: ['y'],
+    month: ['m'],
+  },
+});
 
 const updatePaymentRecord = async (
   future: string,
@@ -98,10 +106,23 @@ const updatePaymentRecord = async (
 
 const run = async () => {
   try {
-    // Get the timestamp of first day and last day in current month
-    const date = new Date(),
-      y = date.getFullYear(),
+    let y: number, m: number;
+    ({ y, m } = options);
+
+    const date = new Date();
+    if (R.isNil(y) && R.isNil(m)) {
+      // Get the timestamp of first day and last day in current month by default
+      y = date.getFullYear();
       m = date.getMonth();
+    } else if (R.isNil(y)) {
+      y = date.getFullYear();
+      m = m - 1;
+    } else if (R.isNil(m)) {
+      m = date.getMonth();
+    } else {
+      m = m - 1;
+    }
+
     //  Unix timestamps in seconds
     const firstDay = new Date(y, m, 1).getTime() / 1000;
     const lastDay = new Date(y, m + 1, 0).getTime() / 1000;
@@ -123,6 +144,10 @@ const run = async () => {
           if (!R.isEmpty(fundingPayment)) {
             // Write records to Google spreadsheet
             await updatePaymentRecord(future, fundingPayment);
+          } else {
+            console.warn(
+              `Funding payments for ${months[m]} ${future} could not be found!`
+            );
           }
         })
       );

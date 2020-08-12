@@ -2,6 +2,13 @@
 # yarn lockfile v1
 
 
+"@types/getopts@^2.1.0":
+  version "2.1.0"
+  resolved "https://registry.yarnpkg.com/@types/getopts/-/getopts-2.1.0.tgz#f2c7423b25c8e8d12326cd8c389ff9ec6fc51e79"
+  integrity sha512-vtBNfAZ2Vyz8aZapXTVjJPVty9gIg5G0As5yyiuPuxmxKtTswuc6mtS8XdWgtFMDJ/SPF84JorR5iY8GU52HGw==
+  dependencies:
+    getopts "*"
+
 "@types/google-spreadsheet@^3.0.0":
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/@types/google-spreadsheet/-/google-spreadsheet-3.0.0.tgz#b3243e2733847fd03651c95726c211a6ac6f3860"
@@ -126,6 +133,11 @@ gcp-metadata@^3.4.0:
   dependencies:
     gaxios "^2.1.0"
     json-bigint "^0.3.0"
+
+getopts@*, getopts@^2.2.5:
+  version "2.2.5"
+  resolved "https://registry.yarnpkg.com/getopts/-/getopts-2.2.5.tgz#67a0fe471cacb9c687d817cab6450b96dde8313b"
+  integrity sha512-9jb7AW5p3in+IiJWhQiZmmwkpLaR/ccTWdWQCtZM66HJcHHLegowh4q4tSD7gouUyeNvFWRavfK9GXosQHDpFA==
 
 google-auth-library@^5.9.1:
   version "5.10.1"
