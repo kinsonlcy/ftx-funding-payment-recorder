@@ -28,13 +28,13 @@ const updatePaymentRecord = async (
   future: string,
   fundingPayments: FundingPayment[]
 ) => {
-  if (process.env.GOOGLE_SHEET_ID === undefined) {
+  if (R.isNil(process.env.GOOGLE_SHEET_ID)) {
     throw new Error('Missing google sheet ID!');
   }
 
   if (
-    process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL === undefined ||
-    process.env.GOOGLE_PRIVATE_KEY === undefined
+    R.isNil(process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL) ||
+    R.isNil(process.env.GOOGLE_PRIVATE_KEY)
   ) {
     throw new Error('Missing google account credential!');
   }
@@ -60,7 +60,7 @@ const updatePaymentRecord = async (
   const sheetId = sheetTitleIdMapping[sheetName];
 
   let sheet: GoogleSpreadsheetWorksheet;
-  if (sheetId === undefined) {
+  if (R.isNil(sheetId)) {
     // create a new sheet if sheet of the month doesn't exist
     sheet = await doc.addSheet({
       title: sheetName,
