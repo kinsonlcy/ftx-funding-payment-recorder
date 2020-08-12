@@ -14,7 +14,9 @@ A simple script to record funding payments from FTX
 
 5. Create a Google spreadsheet and grant edit right to your service account email
 
-6. Done!
+6. For quick start, run yarn && yarn start
+
+7. Done!
 
 ## License
 
