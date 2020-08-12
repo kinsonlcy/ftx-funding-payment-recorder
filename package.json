@@ -11,11 +11,13 @@
   "dependencies": {
     "axios": "^0.19.2",
     "dotenv": "^8.2.0",
-    "google-spreadsheet": "^3.0.11"
+    "google-spreadsheet": "^3.0.11",
+    "ramda": "^0.27.1"
   },
   "devDependencies": {
     "@types/google-spreadsheet": "^3.0.0",
     "@types/node": "^14.0.27",
+    "@types/ramda": "^0.27.14",
     "prettier": "^2.0.5",
     "typescript": "^3.9.7"
   }
