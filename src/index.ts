@@ -1,6 +1,10 @@
 import 'dotenv/config';
 
-import { GoogleSpreadsheet } from 'google-spreadsheet';
+import {
+  GoogleSpreadsheet,
+  GoogleSpreadsheetWorksheet,
+} from 'google-spreadsheet';
+
 import axios from 'axios';
 import crypto from 'crypto';
 import querystring from 'querystring';
@@ -110,20 +114,21 @@ const updatePaymentRecord = async (fundingPayments: FundingPayment[]) => {
   const currentMonth = months[currentTimestamp.getMonth()];
   const sheetId = sheetTitleIdMapping[currentMonth];
 
-  const sheet = await doc.addSheet({
-    title: 'temp',
-    headerValues: ['future', 'payment', 'rate', 'time'],
-  });
-
-  if (sheetId !== undefined) {
-    const oldSheet = doc.sheetsById[sheetId];
-    // delete existing sheet
-    await oldSheet.delete();
-    // reassign title to the new sheet
-    await sheet.updateProperties({ title: currentMonth });
+  let sheet: GoogleSpreadsheetWorksheet;
+  if (sheetId === undefined) {
+    // create a new sheet if sheet of the month doesn't exist
+    sheet = await doc.addSheet({
+      title: currentMonth,
+      headerValues: ['future', 'payment', 'rate', 'time'],
+    });
+  } else {
+    sheet = doc.sheetsById[sheetId];
+    // clear all data in the sheet
+    await sheet.clear();
+    await sheet.setHeaderRow(['future', 'payment', 'rate', 'time']);
   }
 
-  // add back data to the new sheet
+  // add back data to the sheet
   console.log(`Writing ${fundingPayments.length} records to spreadsheet.`);
   await sheet.addRows(fundingPayments);
   console.log('Records have been successfully written.');
