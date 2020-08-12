@@ -34,6 +34,7 @@ const options = getopts(process.argv.slice(2), {
 
 const updatePaymentRecord = async (
   future: string,
+  currentMonth: string,
   fundingPayments: FundingPayment[]
 ) => {
   if (R.isNil(process.env.GOOGLE_SHEET_ID)) {
@@ -63,8 +64,7 @@ const updatePaymentRecord = async (
     });
   }
 
-  const currentTimestamp = new Date(Date.now());
-  const sheetName = `${months[currentTimestamp.getMonth()]}-${future}`;
+  const sheetName = `${currentMonth}-${future}`;
   const sheetId = sheetTitleIdMapping[sheetName];
 
   let sheet: GoogleSpreadsheetWorksheet;
@@ -143,7 +143,7 @@ const run = async () => {
 
           if (!R.isEmpty(fundingPayment)) {
             // Write records to Google spreadsheet
-            await updatePaymentRecord(future, fundingPayment);
+            await updatePaymentRecord(future, months[m], fundingPayment);
           } else {
             console.warn(
               `Funding payments for ${months[m]} ${future} could not be found!`
