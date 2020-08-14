@@ -1,5 +1,3 @@
-import 'dotenv/config';
-
 import { AccountPosition, FundingPayment } from './types';
 import axios, { AxiosInstance } from 'axios';
 import querystring, { ParsedUrlQueryInput } from 'querystring';
