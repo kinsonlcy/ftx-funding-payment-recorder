@@ -36,7 +36,8 @@ const options = getopts(process.argv.slice(2), {
 
 const updatePaymentRecord = async (
   future: string,
-  currentMonth: string,
+  y: number,
+  m: number,
   fundingPayments: FundingPayment[]
 ) => {
   if (R.isNil(process.env.GOOGLE_SHEET_ID)) {
@@ -66,7 +67,7 @@ const updatePaymentRecord = async (
     });
   }
 
-  const sheetName = `${currentMonth}-${future}`;
+  const sheetName = `${months[m]}-${future}`;
   const sheetId = sheetTitleIdMapping[sheetName];
 
   let sheet: GoogleSpreadsheetWorksheet;
@@ -93,16 +94,30 @@ const updatePaymentRecord = async (
 
   // calculate and show profit
   await sheet.loadCells('A1:G800'); // loads a range of cells
-  const f2 = sheet.getCellByA1('F2');
-  const f3 = sheet.getCellByA1('F3');
-  const g2 = sheet.getCellByA1('G2');
-  const g3 = sheet.getCellByA1('G3');
-  f2.value = 'Net (usd)';
-  f2.textFormat = { bold: true };
-  f3.value = 'hkd';
-  f3.textFormat = { bold: true };
-  g2.formula = '=ABS(SUM(B2:B))';
-  g3.formula = `=MULTIPLY(G2,${hkdToUsdRate})`;
+
+  const infoMap = [
+    { desc: 'Net (usd)', value: '=ABS(SUM(B2:B))' },
+    { desc: `hkd 1:${hkdToUsdRate}`, value: `=MULTIPLY(G2,${hkdToUsdRate})` },
+    { desc: 'avg rate', value: '=AVERAGE(C2:C)' },
+    { desc: 'avg hr income', value: '=ABS(AVERAGE(B2:B))' },
+    { desc: 'avg daily income', value: '=MULTIPLY(ABS(AVERAGE(B2:B)),24)' },
+    { desc: 'no. of days', value: '=COUNT(B2:B)/24' },
+    {
+      desc: 'est monthly net',
+      value: `=MULTIPLY(G6,${new Date(y, m, 0).getDate()})`,
+    },
+  ];
+
+  let rowNum = 2;
+  infoMap.forEach((info) => {
+    const descCell = sheet.getCellByA1(`F${rowNum}`);
+    const valueCell = sheet.getCellByA1(`G${rowNum}`);
+    descCell.value = info.desc;
+    descCell.textFormat = { bold: true };
+    valueCell.formula = info.value;
+    rowNum++;
+  });
+
   await sheet.saveUpdatedCells();
 };
 
@@ -145,7 +160,7 @@ const run = async () => {
 
           if (!R.isEmpty(fundingPayment)) {
             // Write records to Google spreadsheet
-            await updatePaymentRecord(future, months[m], fundingPayment);
+            await updatePaymentRecord(future, y, m, fundingPayment);
           } else {
             console.warn(
               `Funding payments for ${months[m]} ${future} could not be found!`
