@@ -142,7 +142,7 @@ const run = async () => {
 
     //  Unix timestamps in seconds
     const firstDay = new Date(y, m, 1).getTime() / 1000;
-    const lastDay = new Date(y, m + 1, 0).getTime() / 1000;
+    const lastDay = new Date(y, m + 1, 1).getTime() / 1000 - 1;
 
     // get account futures from FTX
     const accountFutures = R.pluck('future')(await getAccountPosition());
