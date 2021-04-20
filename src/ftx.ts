@@ -33,15 +33,17 @@ const getApiClient = (
 };
 
 const getFundingPayment = async (
-  future: string,
   firstDay: number,
-  lastDay: number
+  lastDay: number,
+  future?: string
 ): Promise<FundingPayment[]> => {
-  const queryPayload = {
-    start_time: firstDay,
-    end_time: lastDay,
-    future,
-  };
+  let queryPayload = {};
+
+  queryPayload = { start_time: firstDay, end_time: lastDay };
+
+  if (!R.isNil(future)) {
+    queryPayload = { ...queryPayload, future };
+  }
 
   const apiClient = getApiClient('funding_payments', queryPayload);
 

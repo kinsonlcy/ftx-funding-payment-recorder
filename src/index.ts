@@ -35,10 +35,10 @@ const options = getopts(process.argv.slice(2), {
 });
 
 const updatePaymentRecord = async (
-  future: string,
   y: number,
   m: number,
-  fundingPayments: FundingPayment[]
+  fundingPayments: FundingPayment[],
+  future?: string
 ) => {
   if (R.isNil(process.env.GOOGLE_SHEET_ID)) {
     throw new Error('Missing google sheet ID!');
@@ -67,7 +67,7 @@ const updatePaymentRecord = async (
     });
   }
 
-  const sheetName = `${months[m]}-${future}`;
+  const sheetName = R.isNil(future) ? `${months[m]}` : `${months[m]}-${future}`;
   const sheetId = sheetTitleIdMapping[sheetName];
 
   let sheet: GoogleSpreadsheetWorksheet;
@@ -123,8 +123,10 @@ const updatePaymentRecord = async (
 
 const run = async () => {
   try {
-    let y: number, m: number;
-    ({ y, m } = options);
+    let y: number,
+      m: number,
+      isSingle = false;
+    ({ y, m, single: isSingle } = options);
 
     const date = new Date();
     if (R.isNil(y) && R.isNil(m)) {
@@ -144,6 +146,18 @@ const run = async () => {
     const firstDay = new Date(y, m, 1).getTime() / 1000;
     const lastDay = new Date(y, m + 1, 1).getTime() / 1000 - 1;
 
+    // group funding payment record into single page
+    if (isSingle) {
+      console.info(`Getting ${months[m]} funding payments.`);
+      const fundingPayment = await getFundingPayment(firstDay, lastDay);
+
+      if (!R.isEmpty(fundingPayment)) {
+        // Write records to Google spreadsheet
+        await updatePaymentRecord(y, m, fundingPayment);
+      } else {
+        console.warn(`Funding payments for ${months[m]} could not be found!`);
+      }
+    } else {
     // get account futures from FTX
     const accountFutures = R.pluck('future')(await getAccountPosition());
 
@@ -153,14 +167,14 @@ const run = async () => {
           // get funding payments from FTX
           console.info(`Getting ${months[m]} ${future} funding payments.`);
           const fundingPayment = await getFundingPayment(
-            future,
             firstDay,
-            lastDay
+              lastDay,
+              future
           );
 
           if (!R.isEmpty(fundingPayment)) {
             // Write records to Google spreadsheet
-            await updatePaymentRecord(future, y, m, fundingPayment);
+              await updatePaymentRecord(y, m, fundingPayment, future);
           } else {
             console.warn(
               `Funding payments for ${months[m]} ${future} could not be found!`
@@ -170,6 +184,7 @@ const run = async () => {
       );
     } else {
       console.warn('No opening position in your account!');
+    }
     }
   } catch (e) {
     console.error('Error occurred!', e);
