@@ -98,14 +98,6 @@ const updatePaymentRecord = async (
   const infoMap = [
     { desc: 'Net (usd)', value: '=ABS(SUM(B2:B))' },
     { desc: `hkd 1:${hkdToUsdRate}`, value: `=MULTIPLY(G2,${hkdToUsdRate})` },
-    { desc: 'avg rate', value: '=AVERAGE(C2:C)' },
-    { desc: 'avg hr income', value: '=ABS(AVERAGE(B2:B))' },
-    { desc: 'avg daily income', value: '=MULTIPLY(ABS(AVERAGE(B2:B)),24)' },
-    { desc: 'no. of days', value: '=COUNT(B2:B)/24' },
-    {
-      desc: 'est monthly net',
-      value: `=MULTIPLY(G6,${new Date(y, m, 0).getDate()})`,
-    },
   ];
 
   let rowNum = 2;
@@ -158,33 +150,33 @@ const run = async () => {
         console.warn(`Funding payments for ${months[m]} could not be found!`);
       }
     } else {
-    // get account futures from FTX
-    const accountFutures = R.pluck('future')(await getAccountPosition());
+      // get account futures from FTX
+      const accountFutures = R.pluck('future')(await getAccountPosition());
 
-    if (!R.isEmpty(accountFutures)) {
-      await Promise.all(
-        accountFutures.map(async (future) => {
-          // get funding payments from FTX
-          console.info(`Getting ${months[m]} ${future} funding payments.`);
-          const fundingPayment = await getFundingPayment(
-            firstDay,
+      if (!R.isEmpty(accountFutures)) {
+        await Promise.all(
+          accountFutures.map(async (future) => {
+            // get funding payments from FTX
+            console.info(`Getting ${months[m]} ${future} funding payments.`);
+            const fundingPayment = await getFundingPayment(
+              firstDay,
               lastDay,
               future
-          );
-
-          if (!R.isEmpty(fundingPayment)) {
-            // Write records to Google spreadsheet
-              await updatePaymentRecord(y, m, fundingPayment, future);
-          } else {
-            console.warn(
-              `Funding payments for ${months[m]} ${future} could not be found!`
             );
-          }
-        })
-      );
-    } else {
-      console.warn('No opening position in your account!');
-    }
+
+            if (!R.isEmpty(fundingPayment)) {
+              // Write records to Google spreadsheet
+              await updatePaymentRecord(y, m, fundingPayment, future);
+            } else {
+              console.warn(
+                `Funding payments for ${months[m]} ${future} could not be found!`
+              );
+            }
+          })
+        );
+      } else {
+        console.warn('No opening position in your account!');
+      }
     }
   } catch (e) {
     console.error('Error occurred!', e);
