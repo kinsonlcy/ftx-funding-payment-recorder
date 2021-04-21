@@ -23,7 +23,7 @@ A simple script to record funding payments from FTX
 You can also get previous funding payments through passing arguments. For example:
 
 ```
- yarn start [-y|--year] 2020 [-m|--month] 8
+ yarn start [-y|--year] 2020 [-m|--month] 8 [-s|--subAccount] hello
 ```
 
 ## License
