@@ -1,4 +1,4 @@
-import { AccountPosition, FundingPayment } from './types';
+import { AccountPosition, FundingPayment, SpotMarginHistory } from './types';
 import axios, { AxiosInstance } from 'axios';
 import querystring, { ParsedUrlQueryInput } from 'querystring';
 
@@ -71,4 +71,21 @@ const getAccountPosition = async (): Promise<AccountPosition[]> => {
   return success ? result : [];
 };
 
-export { getFundingPayment, getAccountPosition };
+const getSpotMarginBorrowHistory = async (
+  firstDay: number,
+  lastDay: number
+): Promise<SpotMarginHistory[]> => {
+  const queryPayload = { start_time: firstDay, end_time: lastDay };
+  const apiClient = getApiClient('spot_margin/borrow_history', queryPayload);
+  const {
+    data: { result, success },
+  } = await apiClient({
+    method: 'get',
+    url: '/spot_margin/borrow_history',
+    params: queryPayload,
+  });
+
+  return success ? result : [];
+};
+
+export { getFundingPayment, getAccountPosition, getSpotMarginBorrowHistory };

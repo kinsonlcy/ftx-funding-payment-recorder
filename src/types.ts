@@ -13,3 +13,11 @@ export interface FundingPayment extends ExcelRowHeader {
 export interface AccountPosition {
   future: string;
 }
+
+export interface SpotMarginHistory {
+  coin: string;
+  cost: number;
+  rate: number;
+  size: number;
+  time: string;
+}
