@@ -11,6 +11,8 @@ import {
   getAccountPosition,
   getFundingPayment,
   getSpotMarginBorrowHistory,
+  getSubAccount,
+  setSubAccount,
 } from './ftx';
 
 import R from 'ramda';
@@ -35,6 +37,7 @@ const options = getopts(process.argv.slice(2), {
   alias: {
     year: ['y'],
     month: ['m'],
+    subAccount: ['s'],
   },
 });
 
@@ -72,7 +75,9 @@ const updatePaymentRecord = async (
     });
   }
 
-  const sheetName = R.isNil(future) ? `${months[m]}` : `${months[m]}-${future}`;
+  const subAccount = getSubAccount();
+  let sheetName = R.isNil(future) ? `${months[m]}` : `${months[m]}-${future}`;
+  sheetName = subAccount !== '' ? `${subAccount}-${sheetName}` : sheetName;
   const sheetId = sheetTitleIdMapping[sheetName];
 
   let sheet: GoogleSpreadsheetWorksheet;
@@ -194,8 +199,9 @@ const run = async () => {
   try {
     let y: number,
       m: number,
+      s: string,
       isSingle = false;
-    ({ y, m, single: isSingle } = options);
+    ({ y, m, s, single: isSingle } = options);
 
     const date = new Date();
     if (R.isNil(y) && R.isNil(m)) {
@@ -209,6 +215,10 @@ const run = async () => {
       m = date.getMonth();
     } else {
       m = m - 1;
+    }
+
+    if (!R.isNil(s)) {
+      setSubAccount(s);
     }
 
     //  Unix timestamps in seconds

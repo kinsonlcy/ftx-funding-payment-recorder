@@ -5,6 +5,14 @@ import querystring, { ParsedUrlQueryInput } from 'querystring';
 import R from 'ramda';
 import crypto from 'crypto';
 
+let subAccount = '';
+
+const setSubAccount = (name: string) => {
+  subAccount = encodeURI(name);
+};
+
+const getSubAccount = () => subAccount;
+
 const getApiClient = (
   endpoint: string,
   options?: ParsedUrlQueryInput
@@ -21,14 +29,18 @@ const getApiClient = (
     .update(payload)
     .digest('hex');
 
+  const headers = {
+    'FTX-KEY': process.env.API_KEY,
+    'FTX-TS': timestamp,
+    'FTX-SIGN': signature,
+  };
   return axios.create({
     baseURL: 'https://ftx.com/api',
     timeout: 30000,
-    headers: {
-      'FTX-KEY': process.env.API_KEY,
-      'FTX-TS': timestamp,
-      'FTX-SIGN': signature,
-    },
+    headers:
+      subAccount !== ''
+        ? { ...headers, 'FTX-SUBACCOUNT': subAccount }
+        : headers,
   });
 };
 
@@ -88,4 +100,10 @@ const getSpotMarginBorrowHistory = async (
   return success ? result : [];
 };
 
-export { getFundingPayment, getAccountPosition, getSpotMarginBorrowHistory };
+export {
+  getFundingPayment,
+  getAccountPosition,
+  getSpotMarginBorrowHistory,
+  setSubAccount,
+  getSubAccount,
+};
